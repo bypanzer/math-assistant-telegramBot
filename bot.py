@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 import scipy.misc
 from point import Point
+from mathoperation import MathOperation
 
 bot_token = '526035971:AAGJudEYdqnT9LZE-0Rz86PQvyel9agFyNo'
 bot = telebot.TeleBot(token=bot_token)
@@ -48,6 +49,8 @@ def photo(message):
     foregrounds = np.array([])
     foregroundAmount = 0
     
+    #store all matho operations
+    mathOperations = np.array([])
 
     #calculateHorizontalForegrounds
     for row in range(height):
@@ -96,7 +99,8 @@ def photo(message):
     
     
     
-    #fireHorizontalGrid
+    # start fireHorizontalGrid
+    
     #deleteWhiteNoise(sums, withThreshold: 10, leftAndRightBlackValues: 15)
     for index in range(1, sums.size - 1):
         if sums[index].y == 1:
@@ -181,10 +185,12 @@ def photo(message):
                     if row != height:
                         edges_arr[row][column] = 255
         startDrawing = startDrawing + sums2[index2].x
+    # compelte fireHorizontalGrid
+###################################################################################
+
+    # start fireVerticalGrid
     
-    
-    
-    
+                
     
     
     
