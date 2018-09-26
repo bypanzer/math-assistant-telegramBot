@@ -120,6 +120,47 @@ def photo(message):
     
     
     
+    #mergeConsecutiveEqualsNumbers
+    sums2 = np.array([])
+    current = 0
+    cons2 = sums[0].y
+    sums2 = np.append(sums2, sums[0])
+    
+    index = 1
+    for index in range(sums.size):
+        if sums[index].y != cons2:
+            cons2 = sums[index].y
+            sums2 = np.append(sums2, sums[index])
+            current += 1
+        else:
+            sums2[current].x = sums2[current].x + sums[index].x
+    
+    
+    
+    
+    
+    
+    
+    #deleteBlackNoise(sums2, withBlackNoise: 16, andWhiteNoise: 15, noiseForFirstElement: 5)
+    if sums2.size > 1:
+        index = 1
+        for index in range(sums2.size - 1):
+            if sums2[index].y == 0:
+                if sums2[index].x <= 16: #16 -> withBlackNoise
+                    if sums2[index - 1].x >= 15 or sums2[index + 1].x >= 15: #15 -> andWhiteNoise
+                        sums2[index].y = 1
+        if sums2[0].y == 0:
+            if sums2[0].x <= 5: #5 -> noiseForFirstElement
+                sums2[0].y = 1
+    print(sums2)
+                    
+    
+    
+    
+    
+    
+    
+    
     
     scipy.misc.toimage(edges, cmin=0.0, cmax=1.0).save('outfile.jpg')
        
