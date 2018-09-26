@@ -63,8 +63,13 @@ def photo(message):
             foregroundAmount = 1        
         foregrounds = np.append(foregrounds, foregroundAmount)
         foregroundAmount = 0
-    #print(foregrounds)
-    
+
+        
+        
+        
+        
+        
+        
     #calculate sums -> [0, 0, 1, 1, 0] became -> [(2, 0), (2, 1), (1, 0)]
     sums = np.array([])
     sumIndex = 0
@@ -87,8 +92,34 @@ def photo(message):
             cons = foregrounds[index]
     if sums.size <= 1:
         return None
-    else:
-        print(sums)
+    #else:
+     #   print(sums)
+    
+    
+    
+    
+    
+    
+    #fireHorizontalGrid
+    #deleteWhiteNoise(sums, withThreshold: 10, leftAndRightBlackValues: 15)
+    index = 1
+    for index in range(sums.size - 1):
+        if sums[index].y == 1:
+            if sums[index].x <= 10: #10 -> withThreshold
+                if sums[index - 1].x > 15 or sums[index + 1].x > 15: #15 -> leftAndRightBlackValues
+                    sums[index].y = 0
+    if sums[0].y == 1:
+        sums[0].y = 0
+        
+    print(sums)
+    
+    
+    
+    
+    
+    
+    
+    
     
     scipy.misc.toimage(edges, cmin=0.0, cmax=1.0).save('outfile.jpg')
        
