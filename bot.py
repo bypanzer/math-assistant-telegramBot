@@ -45,10 +45,6 @@ def photo(message):
     
     height = message.photo[3].height
     width = message.photo[3].width
-    print("the size is: ",edges_arr[0].size)
-    print("image height is: ", height)
-    print("image width is: ", width)
-
     foregrounds = np.array([])
     foregroundAmount = 0
     
@@ -92,8 +88,8 @@ def photo(message):
             cons = foregrounds[index]
     if sums.size <= 1:
         return None
-    #else:
-     #   print(sums)
+    else:
+        print("calculate sums",sums)
     
     
     
@@ -102,16 +98,15 @@ def photo(message):
     
     #fireHorizontalGrid
     #deleteWhiteNoise(sums, withThreshold: 10, leftAndRightBlackValues: 15)
-    index = 1
-    for index in range(sums.size - 1):
+    for index in range(1, sums.size - 1):
         if sums[index].y == 1:
             if sums[index].x <= 10: #10 -> withThreshold
                 if sums[index - 1].x > 15 or sums[index + 1].x > 15: #15 -> leftAndRightBlackValues
                     sums[index].y = 0
     if sums[0].y == 1:
         sums[0].y = 0
-        
-    print(sums)
+    #print("deleteWhiteNoise", sums)
+    
     
     
     
@@ -126,8 +121,44 @@ def photo(message):
     cons2 = sums[0].y
     sums2 = np.append(sums2, sums[0])
     
-    index = 1
-    for index in range(sums.size):
+    for index in range(1, sums.size):
+        if sums[index].y != cons2:
+            cons2 = sums[index].y
+            sums2 = np.append(sums2, sums[index])
+            current += 1
+        else:
+            sums2[current].x = sums2[current].x + sums[index].x
+    
+    #print("mergeConsecutiveEqualsNumbers", sums2)
+    
+    
+    
+    
+    
+    #deleteBlackNoise(sums2, withBlackNoise: 16, andWhiteNoise: 15, noiseForFirstElement: 5)
+    if sums2.size > 1:
+        for index in range(1, sums2.size - 1):
+            if sums2[index].y == 0:
+                if sums2[index].x <= 16: #16 -> withBlackNoise
+                    if sums2[index - 1].x >= 15 or sums2[index + 1].x >= 15: #15 -> andWhiteNoise
+                        sums2[index].y = 1
+        if sums2[0].y == 0:
+            if sums2[0].x <= 5: #5 -> noiseForFirstElement
+                sums2[0].y = 1
+    
+    #print("deleteBlackNoise", sums2)
+    
+    
+    
+    
+    
+    #mergeConsecutiveEqualsNumbers (copy)
+    sums2 = np.array([])
+    current = 0
+    cons2 = sums[0].y
+    sums2 = np.append(sums2, sums[0])
+    
+    for index in range(1, sums.size):
         if sums[index].y != cons2:
             cons2 = sums[index].y
             sums2 = np.append(sums2, sums[index])
@@ -136,25 +167,20 @@ def photo(message):
             sums2[current].x = sums2[current].x + sums[index].x
     
     
+    #print("mergeConsecutiveEqualsNumbers", sums2)            
     
     
     
-    
-    
-    #deleteBlackNoise(sums2, withBlackNoise: 16, andWhiteNoise: 15, noiseForFirstElement: 5)
-    if sums2.size > 1:
-        index = 1
-        for index in range(sums2.size - 1):
-            if sums2[index].y == 0:
-                if sums2[index].x <= 16: #16 -> withBlackNoise
-                    if sums2[index - 1].x >= 15 or sums2[index + 1].x >= 15: #15 -> andWhiteNoise
-                        sums2[index].y = 1
-        if sums2[0].y == 0:
-            if sums2[0].x <= 5: #5 -> noiseForFirstElement
-                sums2[0].y = 1
-    print(sums2)
-                    
-    
+    #drawHorzontalLines
+    startDrawing = 0
+    for index2 in range(sums2.size):
+        if sums2[index2].y == 0:
+            print(sums2[index2])
+            for row in range(startDrawing, sums2[index2].x + startDrawing):
+                for column in range(width):
+                    if row != height:
+                        edges_arr[row][column] = 255
+        startDrawing = startDrawing + sums2[index2].x
     
     
     
