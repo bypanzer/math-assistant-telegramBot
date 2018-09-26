@@ -4,6 +4,7 @@ import networkx as net
 import cv2
 import numpy as np
 import scipy.misc
+from point import Point
 
 bot_token = '526035971:AAGJudEYdqnT9LZE-0Rz86PQvyel9agFyNo'
 bot = telebot.TeleBot(token=bot_token)
@@ -39,7 +40,57 @@ def photo(message):
     #canny
     img = cv2.imread('image.jpg',0)
     edges = cv2.Canny(img,200,400)
-    scipy.misc.toimage(edges, cmin=0.0, cmax=255.0).save('outfile.jpg')
+    edges_arr = np.asarray(edges)
+    edges_arr = np.expand_dims(edges_arr, axis=2)
+    
+    height = message.photo[3].height
+    width = message.photo[3].width
+    print("the size is: ",edges_arr[0].size)
+    print("image height is: ", height)
+    print("image width is: ", width)
+
+    foregrounds = np.array([])
+    foregroundAmount = 0
+    
+
+    #calculateHorizontalForegrounds
+    for row in range(height):
+        for column in range(width):
+            #print(edges_arr[row][column])
+            if edges_arr[row][column] == 255:
+                foregroundAmount += 1
+        if foregroundAmount > 0:
+            foregroundAmount = 1        
+        foregrounds = np.append(foregrounds, foregroundAmount)
+        foregroundAmount = 0
+    #print(foregrounds)
+    
+    #calculate sums -> [0, 0, 1, 1, 0] became -> [(2, 0), (2, 1), (1, 0)]
+    sums = np.array([])
+    sumIndex = 0
+    cons = foregrounds[0]
+    
+    if cons == 0:
+        sums = np.append(sums, Point(1, 0))
+    else:
+        sums = np.append(sums, Point(1, 1))
+    
+    for index in range(foregrounds.size):
+        if foregrounds[index] == cons:
+            sums[sumIndex].x += 1
+        else:
+            sumIndex += 1
+            if foregrounds[index] == 0:
+                sums = np.append(sums, Point(1, 0))
+            else:
+                sums = np.append(sums, Point(1, 1))
+            cons = foregrounds[index]
+    if sums.size <= 1:
+        return None
+    else:
+        print(sums)
+    
+    scipy.misc.toimage(edges, cmin=0.0, cmax=1.0).save('outfile.jpg')
        
     #send photo to client
     photo = open('outfile.jpg', 'rb')
