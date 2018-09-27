@@ -29,9 +29,10 @@ def fireHorizontalGrid(edges_arr, width, height):
     return sums2
 
 
-def fireVerticalGrid(sums2, edges_arr, width, height, mathOperations):
+def fireVerticalGrid(sums2, edges_arr, width, height):
     start = 0
     stop = 0
+    resMathOperations = np.array([])
     for index in range(sums2.size):
         if sums2[index].y == 1 and start <= height:
             stop = start + sums2[index].x
@@ -45,9 +46,11 @@ def fireVerticalGrid(sums2, edges_arr, width, height, mathOperations):
                 sums22 = mergeConsecutiveEqualsNumbers(sumsWithWhiteNoise)
                 sumsWithBlackNoise = deleteBlackNoise(sums22, 45, 5, 5)
                 sums32 = mergeConsecutiveEqualsNumbers(sumsWithBlackNoise)
-                drawVerticalLines(sums32, edges_arr, width, height, start, stop, mathOperations)
+                mathOperationArrayRes = drawVerticalLines(sums32, edges_arr, width, height, start, stop)
+                resMathOperations = np.append(resMathOperations, mathOperationArrayRes)
         start = start + sums2[index].x
-
+    #print(mathOperations)
+    return resMathOperations    
 
 
 def calculateHorizontalForegrounds(edges_arr, width, height):
@@ -144,29 +147,30 @@ def drawHorizontalLines(sums2, edges_arr, width, height):
         
         
 def calculateVerticalForegrounds(edges_arr, width, start, stop):
-        foregrounds2 = np.array([])
+    foregrounds2 = np.array([])
+    foregroundAmount = 0
+    for col in range(width):
+        for row in range(start, stop):
+            if edges_arr[row][col] == 255:
+                foregroundAmount += 1
+        if foregroundAmount > 0:
+            foregroundAmount = 1
+        foregrounds2 = np.append(foregrounds2, foregroundAmount)
         foregroundAmount = 0
-        for col in range(width):
-            for row in range(start, stop):
-                if edges_arr[row][col] == 255:
-                    foregroundAmount += 1
-            if foregroundAmount > 0:
-                foregroundAmount = 1
-            foregrounds2 = np.append(foregrounds2, foregroundAmount)
-            foregroundAmount = 0
-        return foregrounds2
+    return foregrounds2
+
     
-    
-def drawVerticalLines(sums3, edges_arr, width, height, start, stop, mathOperations):
-        startDrawing = 0
-        for index in range(sums3.size):
-            if sums3[index].y == 0:
-                for col in range(startDrawing, sums3[index].x + startDrawing):
-                    for row in range(start, stop):
-                        if row < height and col < width:
-                            edges_arr[row][col] = 255 #white color
-            else:
-                mathOp = MathOperation("undefined", sums3[index].x, stop - start, startDrawing, start, False)
-                mathOperations = np.append(mathOperations, mathOp)
-            startDrawing = startDrawing + sums3[index].x
-        
+def drawVerticalLines(sums3, edges_arr, width, height, start, stop):
+    mathOperationArray = np.array([])
+    startDrawing = 0
+    for index in range(sums3.size):
+        if sums3[index].y == 0:
+            for col in range(startDrawing, sums3[index].x + startDrawing):
+                for row in range(start, stop):
+                    if row < height and col < width:
+                        edges_arr[row][col] = 255 #white color
+        else:
+            mathOp = MathOperation("undefined", sums3[index].x, stop - start, startDrawing, start, False)
+            mathOperationArray = np.append(mathOperationArray, mathOp)
+        startDrawing = startDrawing + sums3[index].x    
+    return mathOperationArray

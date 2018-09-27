@@ -7,6 +7,7 @@ import scipy.misc
 from point import Point
 from mathoperation import MathOperation
 import segmentationalgorithm
+from PIL import Image
 
 bot_token = '526035971:AAGJudEYdqnT9LZE-0Rz86PQvyel9agFyNo'
 bot = telebot.TeleBot(token=bot_token)
@@ -49,12 +50,28 @@ def photo(message):
     width = message.photo[3].width
     
     
-    mathOperations = np.array([])
+    #segmentation algorithm
+    #mathOperations = np.array([])
     sums2 = segmentationalgorithm.fireHorizontalGrid(edges_arr, width, height)
-    segmentationalgorithm.fireVerticalGrid(sums2, edges_arr, width, height, mathOperations)
+    mathOperations = segmentationalgorithm.fireVerticalGrid(sums2, edges_arr, width, height)
 
-
+    
+    
+    #crop all operations from original image
+    #setResultFromMathpix()
+    print(mathOperations)
+    for index in range(mathOperations.size):
+        if mathOperations[index].operation == "undefined":
+            crop_img = img[mathOperations[index].y:mathOperations[index].y + mathOperations[index].height, mathOperations[index].x: mathOperations[index].x + mathOperations[index].width]
+            scipy.misc.toimage(crop_img).save("croppedImage/cropped" + str(index) + ".jpg")
+            
+            
+            
+            
+            
+            
     scipy.misc.toimage(edges, cmin=0.0, cmax=1.0).save('outfile.jpg')
+    
     #send photo to client
     photo = open('outfile.jpg', 'rb')
     bot.send_photo(chat_id=message.chat.id, photo=photo)
