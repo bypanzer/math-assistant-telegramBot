@@ -37,7 +37,7 @@ def fireVerticalGrid(sums2, edges_arr, width, height):
         if sums2[index].y == 1 and start <= height:
             stop = start + sums2[index].x
 
-            foregrounds2 = calculateVerticalForegrounds(edges_arr, width, start, stop)
+            foregrounds2 = calculateVerticalForegrounds(edges_arr, width, height, start, stop)
             if foregrounds2 is None:
                 print("IS NONE")
             sums = calculateSum(foregrounds2)
@@ -58,8 +58,9 @@ def calculateHorizontalForegrounds(edges_arr, width, height):
         foregroundAmount = 0
         for row in range(height):
             for column in range(width):
-                if edges_arr[row][column] == 255:
-                    foregroundAmount += 1
+                if row < height and column < width:
+                    if edges_arr[row][column] == 255:
+                        foregroundAmount += 1
             if foregroundAmount > 0:
                 foregroundAmount = 1        
             foregrounds = np.append(foregrounds, foregroundAmount)
@@ -93,14 +94,17 @@ def calculateSum(foregrounds):
             return sums
     
 def deleteWhiteNoise(sums, threshold, leftAndRightBlackValues):
-        for index in range(1, sums.size - 1):
-            if sums[index].y == 1:
-                if sums[index].x <= threshold: #10 -> withThreshold
-                    if sums[index - 1].x > leftAndRightBlackValues or sums[index + 1].x > leftAndRightBlackValues: #15 -> leftAndRightBlackValues
-                        sums[index].y = 0
-        if sums[0].y == 1:
-            sums[0].y = 0
-        return sums
+    if sums.size <= 1:
+            print("deleteWhiteNoise return None")
+            return None
+    for index in range(1, sums.size - 1):
+        if sums[index].y == 1:
+            if sums[index].x <= threshold: #10 -> withThreshold
+                if sums[index - 1].x > leftAndRightBlackValues or sums[index + 1].x > leftAndRightBlackValues: #15 -> leftAndRightBlackValues
+                    sums[index].y = 0
+    if sums[0].y == 1:
+        sums[0].y = 0
+    return sums
 
     
 def mergeConsecutiveEqualsNumbers(sums):
@@ -146,13 +150,14 @@ def drawHorizontalLines(sums2, edges_arr, width, height):
 
         
         
-def calculateVerticalForegrounds(edges_arr, width, start, stop):
+def calculateVerticalForegrounds(edges_arr, width, height, start, stop):
     foregrounds2 = np.array([])
     foregroundAmount = 0
     for col in range(width):
         for row in range(start, stop):
-            if edges_arr[row][col] == 255:
-                foregroundAmount += 1
+            if row < height and col < width:
+                if edges_arr[row][col] == 255:
+                    foregroundAmount += 1
         if foregroundAmount > 0:
             foregroundAmount = 1
         foregrounds2 = np.append(foregrounds2, foregroundAmount)

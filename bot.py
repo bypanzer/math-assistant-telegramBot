@@ -6,8 +6,9 @@ import numpy as np
 import scipy.misc
 from point import Point
 from mathoperation import MathOperation
+import mathpix
 import segmentationalgorithm
-from PIL import Image
+#from PIL import Image
 
 bot_token = '526035971:AAGJudEYdqnT9LZE-0Rz86PQvyel9agFyNo'
 bot = telebot.TeleBot(token=bot_token)
@@ -49,6 +50,7 @@ def photo(message):
     height = message.photo[3].height
     width = message.photo[3].width
     
+    total_operation = 0
     
     #segmentation algorithm
     #mathOperations = np.array([])
@@ -59,14 +61,18 @@ def photo(message):
     
     #crop all operations from original image
     #setResultFromMathpix()
-    print(mathOperations)
     for index in range(mathOperations.size):
         if mathOperations[index].operation == "undefined":
             crop_img = img[mathOperations[index].y:mathOperations[index].y + mathOperations[index].height, mathOperations[index].x: mathOperations[index].x + mathOperations[index].width]
             scipy.misc.toimage(crop_img).save("croppedImage/cropped" + str(index) + ".jpg")
-            
-            
-            
+    
+    total_operation = index + 1
+    
+    
+    
+    
+    mathOperations = mathpix.recognize(total_operation, mathOperations)
+    print(mathOperations)
             
             
             
