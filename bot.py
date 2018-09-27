@@ -50,60 +50,10 @@ def photo(message):
     
     
     mathOperations = np.array([])
-    
-    #calculateHorizontalForegrounds
-    foregrounds = segmentationalgorithm.calculateHorizontalForegrounds(edges_arr, width, height)
-    
-    
-    #calculate sums -> [0, 0, 1, 1, 0] became -> [(2, 0), (2, 1), (1, 0)]
-    sums = segmentationalgorithm.calculateSum(foregrounds)
-    
-    
-    
-    # start fireHorizontalGrid
-    #deleteWhiteNoise
-    sums = segmentationalgorithm.deleteWhiteNoise(sums, 10, 15)
-    
-    #mergeConsecutiveEqualsNumbers
-    sums2 = segmentationalgorithm.mergeConsecutiveEqualsNumbers(sums)
-            
-    #deleteBlackNoise
-    sums = segmentationalgorithm.deleteBlackNoise(sums2, 16, 15, 5)    
-    
-    #mergeConsecutiveEqualsNumbers
-    sums2 = segmentationalgorithm.mergeConsecutiveEqualsNumbers(sums)
-    
-    #drawHorzontalLines
-    segmentationalgorithm.drawHorizontalLines(sums2, edges_arr, width, height)
-    
-    # compelte fireHorizontalGrid
-###################################################################################
+    sums2 = segmentationalgorithm.fireHorizontalGrid(edges_arr, width, height)
+    segmentationalgorithm.fireVerticalGrid(sums2, edges_arr, width, height, mathOperations)
 
 
-
-
-
-    # start fireVerticalGrid
-    start = 0
-    stop = 0
-    for index in range(sums2.size):
-        if sums2[index].y == 1 and start <= height:
-            stop = start + sums2[index].x
-
-            foregrounds2 = segmentationalgorithm.calculateVerticalForegrounds(edges_arr, width, start, stop)
-            if foregrounds2 is None:
-                print("IS NONE")
-            sums = segmentationalgorithm.calculateSum(foregrounds2)
-            if sums is not None:
-                sumsWithWhiteNoise = segmentationalgorithm.deleteWhiteNoise(sums, 5, 15)
-                sums22 = segmentationalgorithm.mergeConsecutiveEqualsNumbers(sumsWithWhiteNoise)
-                sumsWithBlackNoise = segmentationalgorithm.deleteBlackNoise(sums22, 45, 5, 5)
-                sums32 = segmentationalgorithm.mergeConsecutiveEqualsNumbers(sumsWithBlackNoise)
-                segmentationalgorithm.drawVerticalLines(sums32, edges_arr, width, height, start, stop, mathOperations)
-        start = start + sums2[index].x
-    
-    # compelte fireVerticalGrid
-    
     scipy.misc.toimage(edges, cmin=0.0, cmax=1.0).save('outfile.jpg')
     #send photo to client
     photo = open('outfile.jpg', 'rb')

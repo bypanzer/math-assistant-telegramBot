@@ -2,6 +2,54 @@ import numpy as np
 from point import Point
 from mathoperation import MathOperation
 
+
+
+def fireHorizontalGrid(edges_arr, width, height):
+    #calculateHorizontalForegrounds
+    foregrounds = calculateHorizontalForegrounds(edges_arr, width, height)
+
+    #calculate sums -> [0, 0, 1, 1, 0] became -> [(2, 0), (2, 1), (1, 0)]
+    sums = calculateSum(foregrounds)
+
+    #deleteWhiteNoise
+    sums = deleteWhiteNoise(sums, 10, 15)
+
+    #mergeConsecutiveEqualsNumbers
+    sums2 = mergeConsecutiveEqualsNumbers(sums)
+
+    #deleteBlackNoise
+    sums = deleteBlackNoise(sums2, 16, 15, 5)    
+
+    #mergeConsecutiveEqualsNumbers
+    sums2 = mergeConsecutiveEqualsNumbers(sums)
+
+    #drawHorzontalLines
+    drawHorizontalLines(sums2, edges_arr, width, height)
+
+    return sums2
+
+
+def fireVerticalGrid(sums2, edges_arr, width, height, mathOperations):
+    start = 0
+    stop = 0
+    for index in range(sums2.size):
+        if sums2[index].y == 1 and start <= height:
+            stop = start + sums2[index].x
+
+            foregrounds2 = calculateVerticalForegrounds(edges_arr, width, start, stop)
+            if foregrounds2 is None:
+                print("IS NONE")
+            sums = calculateSum(foregrounds2)
+            if sums is not None:
+                sumsWithWhiteNoise = deleteWhiteNoise(sums, 5, 15)
+                sums22 = mergeConsecutiveEqualsNumbers(sumsWithWhiteNoise)
+                sumsWithBlackNoise = deleteBlackNoise(sums22, 45, 5, 5)
+                sums32 = mergeConsecutiveEqualsNumbers(sumsWithBlackNoise)
+                drawVerticalLines(sums32, edges_arr, width, height, start, stop, mathOperations)
+        start = start + sums2[index].x
+
+
+
 def calculateHorizontalForegrounds(edges_arr, width, height):
         foregrounds = np.array([])
         foregroundAmount = 0
