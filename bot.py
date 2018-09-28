@@ -22,16 +22,20 @@ def find_at(msg):
                         return text
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
-        bot.send_photo(chat_id=message.chat.id, photo='http://i64.tinypic.com/2r3bj0n.jpg')
+    #bot.send_photo(chat_id=message.chat.id, photo='http://i64.tinypic.com/2r3bj0n.jpg')
+    bot.send_message(message.chat.id, "Ciao, sono un bot che corregge foto di operazioni matematiche scritte a mano. Inviami un foto con operazioni matematiche del tipo \"23 + 50 = 73\" o \"5 x 4 = 20\" e io ti dirò se sono giuste o meno! Versione 1.0: coreggo solo operazioni piane, non in colonna. A breve ci sarà l'upgrade ;)")        
 
-        
+'''  
 @bot.message_handler(content_types=['text'])
 def echo(message):
     bot.send_message(message.chat.id, message.text)        
-        
+'''     
         
 @bot.message_handler(content_types=['photo'])
 def photo(message):
+    
+    bot.send_message(message.chat.id, "Sto correggendo..")
+    
     print("message.photo =", message.photo)
     fileID = message.photo[-1].file_id
     print("fileID =", fileID)
@@ -101,7 +105,8 @@ def photo(message):
     mathOperations = np.array([])    
     for index in range(newMathOperations.size):
         if "y" not in str(newMathOperations[index].operation) or "a" not in str(newMathOperations[index].operation) or "t" not in str(newMathOperations[index].operation):
-            mathOperations = np.append(mathOperations, newMathOperations[index])
+            if "=" in str(newMathOperations[index].operation):
+                mathOperations = np.append(mathOperations, newMathOperations[index])
     
 
     
@@ -112,8 +117,13 @@ def photo(message):
         mathOperations[index].operation = str(mathOperations[index].operation).replace(" ", "")
     
     
-    
+    print(mathOperations)
             
+    
+    
+    
+    
+    
     
     #evaluate correctness
     nsp = NumericStringParser()
@@ -122,8 +132,13 @@ def photo(message):
         splitOperation = splitOperation.replace("]", "")
         splitOperation = splitOperation.replace("'", "")
         splitOperation =  splitOperation.split("=")
-        
-        evaluation = nsp.eval(str(splitOperation[0]))
+        try:
+            evaluation = nsp.eval(str(splitOperation[0]))
+            print("eval: ", int(evaluation))
+            print("split[1]: ", int(splitOperation[1]))
+        except:
+            bot.send_message(message.chat.id, "Scatta la foto un po' più da lontano e non inquadrare i bordi del foglio!")
+            return
         if int(evaluation) == int(splitOperation[1]):
             mathOperations[index].isCorrect = True
         else:
@@ -140,27 +155,24 @@ def photo(message):
     
     for index in range(mathOperations.size):
         if mathOperations[index].isCorrect:
-            d.text((mathOperations[index].x, mathOperations[index].y - 40), "OK", font=fnt, fill=(255, 255, 0))
+            d.text((mathOperations[index].x, mathOperations[index].y - 40), "OK", font=fnt, fill=(0, 255, 0))
         else:
-            d.text((mathOperations[index].x, mathOperations[index].y - 40), "NO", font=fnt, fill=(255, 255, 0))
+            d.text((mathOperations[index].x, mathOperations[index].y - 40), "NO", font=fnt, fill=(255, 0, 0))
     
     rgbimg.save("correctImage.jpg")
-        
-        
-        
-        
-    scipy.misc.toimage(edges, cmin=0.0, cmax=1.0).save('outfile.jpg')
+           
     
     #send photo to client
-    photo = open('outfile.jpg', 'rb')
+    photo = open('correctImage.jpg', 'rb')
     bot.send_photo(chat_id=message.chat.id, photo=photo)
-    
+''' 
 @bot.message_handler(func=lambda msg: msg.text is not None and '@' in msg.text)
 def at_answer(message):
         print(message)
         texts = message.text.split()
         at_text = find_at(texts)
         bot.reply_to(message, 'https://instagram.com/{}'.format(at_text[1:]))
+'''
 while True:
         try:
                 bot.polling()
