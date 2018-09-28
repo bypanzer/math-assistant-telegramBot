@@ -64,8 +64,8 @@ def photo(message):
     
     scipy.misc.toimage(dilation, cmin=0.0, cmax=1.0).save('outfile.jpg')
     #send photo to client
-    #photo = open('outfile.jpg', 'rb')
-    #bot.send_photo(chat_id=message.chat.id, photo=photo)
+    photo = open('outfile.jpg', 'rb')
+    bot.send_photo(chat_id=message.chat.id, photo=photo)
     
     
     height = message.photo[3].height
@@ -75,8 +75,15 @@ def photo(message):
     
     #segmentation algorithm
     sums2 = segmentationalgorithm.fireHorizontalGrid(edges_arr, width, height)
-    mathOperations = segmentationalgorithm.fireVerticalGrid(sums2, edges_arr, width, height)
-
+    if sums2 is None:
+        bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!")
+        return
+    else:
+        mathOperations = segmentationalgorithm.fireVerticalGrid(sums2, edges_arr, width, height)
+        if mathOperations is None:
+            bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!")
+            return
+            
     
     
     #crop all operations from original image
@@ -189,8 +196,8 @@ def photo(message):
     scipy.misc.toimage(closing, cmin=0.0, cmax=1.0).save('outfile.jpg')
     
     #send photo to client
-    #photo = open('outfile.jpg', 'rb')
-    #bot.send_photo(chat_id=message.chat.id, photo=photo)
+    photo = open('outfile.jpg', 'rb')
+    bot.send_photo(chat_id=message.chat.id, photo=photo)
     
     
     #send message of someOperationHasNotBeenReadProperly

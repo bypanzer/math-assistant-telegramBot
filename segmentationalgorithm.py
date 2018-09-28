@@ -11,6 +11,9 @@ def fireHorizontalGrid(edges_arr, width, height):
     #calculate sums -> [0, 0, 1, 1, 0] became -> [(2, 0), (2, 1), (1, 0)]
     sums = calculateSum(foregrounds)
 
+    if sums is None:
+        return None
+    
     #deleteWhiteNoise
     sums = deleteWhiteNoise(sums, 10, 10)
 
@@ -40,6 +43,7 @@ def fireVerticalGrid(sums2, edges_arr, width, height):
             foregrounds2 = calculateVerticalForegrounds(edges_arr, width, height, start, stop)
             if foregrounds2 is None:
                 print("IS NONE")
+                return None
             sums = calculateSum(foregrounds2)
             if sums is not None:
                 sumsWithWhiteNoise = deleteWhiteNoise(sums, 5, 10)
@@ -48,6 +52,8 @@ def fireVerticalGrid(sums2, edges_arr, width, height):
                 sums32 = mergeConsecutiveEqualsNumbers(sumsWithBlackNoise)
                 mathOperationArrayRes = drawVerticalLines(sums32, edges_arr, width, height, start, stop)
                 resMathOperations = np.append(resMathOperations, mathOperationArrayRes)
+            else:
+                return None
         start = start + sums2[index].x
     #print(mathOperations)
     return resMathOperations    
