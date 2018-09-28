@@ -12,13 +12,13 @@ def fireHorizontalGrid(edges_arr, width, height):
     sums = calculateSum(foregrounds)
 
     #deleteWhiteNoise
-    sums = deleteWhiteNoise(sums, 10, 15)
+    sums = deleteWhiteNoise(sums, 10, 10)
 
     #mergeConsecutiveEqualsNumbers
     sums2 = mergeConsecutiveEqualsNumbers(sums)
 
     #deleteBlackNoise
-    sums = deleteBlackNoise(sums2, 16, 15, 5)    
+    sums = deleteBlackNoise(sums2, 12, 10, 5)   #12 horizontal noise 
 
     #mergeConsecutiveEqualsNumbers
     sums2 = mergeConsecutiveEqualsNumbers(sums)
@@ -42,9 +42,9 @@ def fireVerticalGrid(sums2, edges_arr, width, height):
                 print("IS NONE")
             sums = calculateSum(foregrounds2)
             if sums is not None:
-                sumsWithWhiteNoise = deleteWhiteNoise(sums, 5, 15)
+                sumsWithWhiteNoise = deleteWhiteNoise(sums, 5, 10)
                 sums22 = mergeConsecutiveEqualsNumbers(sumsWithWhiteNoise)
-                sumsWithBlackNoise = deleteBlackNoise(sums22, 45, 5, 5)
+                sumsWithBlackNoise = deleteBlackNoise(sums22, 60, 5, 5) #50 vertical noise
                 sums32 = mergeConsecutiveEqualsNumbers(sumsWithBlackNoise)
                 mathOperationArrayRes = drawVerticalLines(sums32, edges_arr, width, height, start, stop)
                 resMathOperations = np.append(resMathOperations, mathOperationArrayRes)

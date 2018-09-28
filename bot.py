@@ -34,7 +34,7 @@ def echo(message):
 @bot.message_handler(content_types=['photo'])
 def photo(message):
     
-    bot.send_message(message.chat.id, "Sto correggendo..")
+    bot.send_message(message.chat.id, "Sto correggendo...")
     
     print("message.photo =", message.photo)
     fileID = message.photo[-1].file_id
@@ -43,15 +43,30 @@ def photo(message):
     print("file.file_path =", file_info.file_path)
     downloaded_file = bot.download_file(file_info.file_path)
 
+    someOperationHasNotBeenReadProperly = False
+    
     #save photo locally
     with open("image.jpg", 'wb') as new_file: #"image.jpg" is chosen 
         new_file.write(downloaded_file)
         
     #canny
     img = cv2.imread('image.jpg',0)
-    edges = cv2.Canny(img,200,400)
-    edges_arr = np.asarray(edges)
+    edges = cv2.Canny(img,520,620)
+    dilation_kernel = np.ones((3, 3),np.uint8)
+    dilation = cv2.dilate(edges, dilation_kernel,iterations = 13)
+    
+    closing_kernel = np.ones((10, 10),np.uint8)
+    closing = cv2.morphologyEx(dilation, cv2.MORPH_CLOSE, closing_kernel)
+    
+    edges_arr = np.asarray(closing)
     edges_arr = np.expand_dims(edges_arr, axis=2)
+    
+    
+    scipy.misc.toimage(dilation, cmin=0.0, cmax=1.0).save('outfile.jpg')
+    #send photo to client
+    #photo = open('outfile.jpg', 'rb')
+    #bot.send_photo(chat_id=message.chat.id, photo=photo)
+    
     
     height = message.photo[3].height
     width = message.photo[3].width
@@ -59,7 +74,6 @@ def photo(message):
     total_operation = 0
     
     #segmentation algorithm
-    #mathOperations = np.array([])
     sums2 = segmentationalgorithm.fireHorizontalGrid(edges_arr, width, height)
     mathOperations = segmentationalgorithm.fireVerticalGrid(sums2, edges_arr, width, height)
 
@@ -118,7 +132,6 @@ def photo(message):
     
     
     print(mathOperations)
-            
     
     
     
@@ -127,6 +140,7 @@ def photo(message):
     
     #evaluate correctness
     nsp = NumericStringParser()
+    newMathOp = np.array([])
     for index in range(mathOperations.size):
         splitOperation = str(mathOperations[index].operation).replace("[", "")
         splitOperation = splitOperation.replace("]", "")
@@ -137,20 +151,26 @@ def photo(message):
             print("eval: ", int(evaluation))
             print("split[1]: ", int(splitOperation[1]))
         except:
-            bot.send_message(message.chat.id, "Scatta la foto un po' più da lontano e non inquadrare i bordi del foglio!")
-            return
-        if int(evaluation) == int(splitOperation[1]):
-            mathOperations[index].isCorrect = True
+            mathOperations[index].operation = "todelete"
+        if mathOperations[index].operation != "todelete":
+            newMathOp = np.append(newMathOp, mathOperations[index])
+            if int(evaluation) == int(splitOperation[1]):
+                mathOperations[index].isCorrect = True
+            else:
+                mathOperations[index].isCorrect = False
         else:
-            mathOperations[index].isCorrect = False
-        
-    
-    print(mathOperations) 
-        
+            if not someOperationHasNotBeenReadProperly: 
+                someOperationHasNotBeenReadProperly = True
+     
+    mathOperations = newMathOp
+    print(mathOperations)
+    if mathOperations.size == 0:
+        bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!")
+        return
     
     #draw result
     rgbimg = Image.open("image.jpg")
-    fnt = ImageFont.truetype('/usr/share/fonts/truetype/roboto/Roboto-Bold.ttf', 40)
+    fnt = ImageFont.truetype('/usr/share/fonts/truetype/roboto/hinted/Roboto-Bold.ttf', 40)
     d = ImageDraw.Draw(rgbimg)
     
     for index in range(mathOperations.size):
@@ -165,6 +185,25 @@ def photo(message):
     #send photo to client
     photo = open('correctImage.jpg', 'rb')
     bot.send_photo(chat_id=message.chat.id, photo=photo)
+    
+    scipy.misc.toimage(closing, cmin=0.0, cmax=1.0).save('outfile.jpg')
+    
+    #send photo to client
+    #photo = open('outfile.jpg', 'rb')
+    #bot.send_photo(chat_id=message.chat.id, photo=photo)
+    
+    
+    #send message of someOperationHasNotBeenReadProperly
+    if someOperationHasNotBeenReadProperly:
+        bot.send_message(message.chat.id, "E' probabile che qualche operazione non sia stata letta correttamente. Allontana un po' di più il dispositivo.")
+    
+    #send operations to client
+    for index in range(mathOperations.size):
+        splitOperation = str(mathOperations[index].operation).replace("[", "")
+        splitOperation = splitOperation.replace("]", "")
+        splitOperation = splitOperation.replace("'", "")
+        bot.send_message(message.chat.id, splitOperation)
+    
 ''' 
 @bot.message_handler(func=lambda msg: msg.text is not None and '@' in msg.text)
 def at_answer(message):
