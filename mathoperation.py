@@ -10,7 +10,7 @@ class MathOperation:
         self.isCorrect = False
         
     def __repr__(self):
-        return "operation: " + str(self.operation) + ", width: " + str(self.width) + ", height: " + str(self.height) + ", x: " + str(self.x) + ", y:" + str(self.y) + ", isCorrect: " + str(self.isCorrect)   
+        return str(self.operation) + ", width: " + str(self.width) + ", height: " + str(self.height) + ", x: " + str(self.x) + ", y:" + str(self.y) + ", isCorrect: " + str(self.isCorrect)   
 
 
 

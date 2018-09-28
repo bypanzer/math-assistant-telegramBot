@@ -6,9 +6,11 @@ import numpy as np
 import scipy.misc
 from point import Point
 from mathoperation import MathOperation
+from  numericstringparser import NumericStringParser
 import mathpix
 import segmentationalgorithm
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
+
 
 bot_token = '526035971:AAGJudEYdqnT9LZE-0Rz86PQvyel9agFyNo'
 bot = telebot.TeleBot(token=bot_token)
@@ -71,11 +73,82 @@ def photo(message):
     
     
     
+    
+    #recognize characters
     mathOperations = mathpix.recognize(total_operation, mathOperations)
-    print(mathOperations)
             
-    print("this should be printed after..")    
+   
+    
+    #parse operations
+    newMathOperations = np.array([])
+    for index in range(mathOperations.size):
+        if len(mathOperations[index].operation) != 0:
+            newMathOperations = np.append(newMathOperations, mathOperations[index])
+            #replace \\div and \\times if present
+            if "\\times" in str(mathOperations[index].operation):
+                mathOperations[index].operation = str(mathOperations[index].operation).replace("times", "*")
+                mathOperations[index].operation = str(mathOperations[index].operation).replace("\\", "")
+            if "\\div" in str(mathOperations[index].operation):
+                mathOperations[index].operation = str(mathOperations[index].operation).replace("div", "/")
+                mathOperations[index].operation = str(mathOperations[index].operation).replace("\\", "")
+            if "x" in str(mathOperations[index].operation):
+                mathOperations[index].operation = str(mathOperations[index].operation).replace("x", "*")
             
+    
+    
+    
+    #check if is present some letters in operations
+    mathOperations = np.array([])    
+    for index in range(newMathOperations.size):
+        if "y" not in str(newMathOperations[index].operation) or "a" not in str(newMathOperations[index].operation) or "t" not in str(newMathOperations[index].operation):
+            mathOperations = np.append(mathOperations, newMathOperations[index])
+    
+
+    
+    
+    
+    #delete spaces
+    for index in range(mathOperations.size):
+        mathOperations[index].operation = str(mathOperations[index].operation).replace(" ", "")
+    
+    
+    
+            
+    
+    #evaluate correctness
+    nsp = NumericStringParser()
+    for index in range(mathOperations.size):
+        splitOperation = str(mathOperations[index].operation).replace("[", "")
+        splitOperation = splitOperation.replace("]", "")
+        splitOperation = splitOperation.replace("'", "")
+        splitOperation =  splitOperation.split("=")
+        
+        evaluation = nsp.eval(str(splitOperation[0]))
+        if int(evaluation) == int(splitOperation[1]):
+            mathOperations[index].isCorrect = True
+        else:
+            mathOperations[index].isCorrect = False
+        
+    
+    print(mathOperations) 
+        
+    
+    #draw result
+    rgbimg = Image.open("image.jpg")
+    fnt = ImageFont.truetype('/usr/share/fonts/truetype/roboto/Roboto-Bold.ttf', 40)
+    d = ImageDraw.Draw(rgbimg)
+    
+    for index in range(mathOperations.size):
+        if mathOperations[index].isCorrect:
+            d.text((mathOperations[index].x, mathOperations[index].y - 40), "OK", font=fnt, fill=(255, 255, 0))
+        else:
+            d.text((mathOperations[index].x, mathOperations[index].y - 40), "NO", font=fnt, fill=(255, 255, 0))
+    
+    rgbimg.save("correctImage.jpg")
+        
+        
+        
+        
     scipy.misc.toimage(edges, cmin=0.0, cmax=1.0).save('outfile.jpg')
     
     #send photo to client
