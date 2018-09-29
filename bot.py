@@ -26,14 +26,13 @@ def run(img, t1, t2, message, width, height):
     edges_arr = np.expand_dims(edges_arr, axis=2)
     
     
-    scipy.misc.toimage(dilation, cmin=0.0, cmax=1.0).save('outfile.jpg')
+    scipy.misc.toimage(closing, cmin=0.0, cmax=1.0).save('outfile.jpg')
     #send photo to client
     photo = open('outfile.jpg', 'rb')
     bot.send_photo(chat_id=message.chat.id, photo=photo)
     
     #segmentation algorithm
     sums2 = segmentationalgorithm.fireHorizontalGrid(edges_arr, width, height)
-    print("sums2: ", sums2)
     if sums2 is None:
         bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!33")
         return
@@ -44,7 +43,9 @@ def run(img, t1, t2, message, width, height):
             return
         else:
             return mathOperations
-
+    
+        
+        
 def wait_for_user_input():
     while True:
         try:
@@ -73,12 +74,8 @@ def send_welcome(message):
 def photo(message):
     
     bot.send_message(message.chat.id, "Sto correggendo...")
-    
-    print("message.photo =", message.photo)
     fileID = message.photo[-1].file_id
-    print("fileID =", fileID)
     file_info = bot.get_file(fileID)
-    print("file.file_path =", file_info.file_path)
     downloaded_file = bot.download_file(file_info.file_path)
 
     someOperationHasNotBeenReadProperly = False
@@ -105,7 +102,8 @@ def photo(message):
     #run algorithm
     mathOperations = run(img, t1, t2, message, width, height)
     
-    
+    if mathOperations is None:
+        return
     
     
     #crop all operations from original image
@@ -144,9 +142,9 @@ def photo(message):
     
     #recognize characters
     mathOperations = mathpix.recognize(total_operation, mathOperations)
+    print(mathOperations)
    
-
-
+    
 
 
 
@@ -175,8 +173,6 @@ def photo(message):
     
     
     
-    
-    
     #check if is present some letters in operations
     mathOperations = np.array([])    
     for index in range(newMathOperations.size):
@@ -185,18 +181,28 @@ def photo(message):
                 mathOperations = np.append(mathOperations, newMathOperations[index])
     
 
-    
-    
-    
-    
-    
-    
-    #delete spaces
+    #parsing for in column operation
     for index in range(mathOperations.size):
-        mathOperations[index].operation = str(mathOperations[index].operation).replace(" ", "")
-    
+        if "'" in str(mathOperations[index].operation):
+            mathOperations[index].operation = str(mathOperations[index].operation).replace("'", "")
+        if "," in str(mathOperations[index].operation):
+            mathOperations[index].operation = str(mathOperations[index].operation).replace(",", "")
+        if "[" in str(mathOperations[index].operation):
+            mathOperations[index].operation = str(mathOperations[index].operation).replace("[", "")
+        if "]" in str(mathOperations[index].operation):
+            mathOperations[index].operation = str(mathOperations[index].operation).replace("]", "")
+        
+        if " " in str(mathOperations[index].operation):
+            mathOperations[index].operation = str(mathOperations[index].operation).replace(" ", "")
+        
+        if "\\$" in str(mathOperations[index].operation): #if is present, is likely that the $ is a 9
+            mathOperations[index].operation = str(mathOperations[index].operation).replace("$", "9")
+            mathOperations[index].operation = str(mathOperations[index].operation).replace("\\", "")
+        if str(mathOperations[index].operation).count('=') > 1:
+            mathOperations[index].operation = str(mathOperations[index].operation).replace("=", "-", 1)
     
     print(mathOperations)
+    
     
     
     
@@ -207,10 +213,7 @@ def photo(message):
     nsp = NumericStringParser()
     newMathOp = np.array([])
     for index in range(mathOperations.size):
-        splitOperation = str(mathOperations[index].operation).replace("[", "")
-        splitOperation = splitOperation.replace("]", "")
-        splitOperation = splitOperation.replace("'", "")
-        splitOperation =  splitOperation.split("=")
+        splitOperation =  str(mathOperations[index].operation).split("=")
         try:
             evaluation = nsp.eval(str(splitOperation[0]))
             moreOperationInOne = int(splitOperation[1])
@@ -227,7 +230,7 @@ def photo(message):
                 someOperationHasNotBeenReadProperly = True
      
     mathOperations = newMathOp
-    print(mathOperations)
+    #print(mathOperations)
     if mathOperations.size == 0:
         bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!")
         return
@@ -268,12 +271,9 @@ def photo(message):
     
     
     
-    
     #send photo to client
     photo = open('outfile.jpg', 'rb')
     bot.send_photo(chat_id=message.chat.id, photo=photo)
-    
-    
     
     
     

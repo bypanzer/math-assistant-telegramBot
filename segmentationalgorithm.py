@@ -3,6 +3,7 @@ from point import Point
 from mathoperation import MathOperation
 
 
+edges_array = np.array([])
 
 def fireHorizontalGrid(edges_arr, width, height):
     #calculateHorizontalForegrounds
@@ -183,5 +184,10 @@ def drawVerticalLines(sums3, edges_arr, width, height, start, stop):
         else:
             mathOp = MathOperation("undefined", sums3[index].x, stop - start, startDrawing, start, False)
             mathOperationArray = np.append(mathOperationArray, mathOp)
-        startDrawing = startDrawing + sums3[index].x    
+        startDrawing = startDrawing + sums3[index].x
+    edges_array = edges_arr
     return mathOperationArray
+
+#need to be tested
+def get_edges_array():    
+    return edges_array
