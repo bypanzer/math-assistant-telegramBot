@@ -168,8 +168,14 @@ def photo(message):
                 mathOperations[index].operation = str(mathOperations[index].operation).replace("div", "/")
             if ":" in str(mathOperations[index].operation):
                 mathOperations[index].operation = str(mathOperations[index].operation).replace(":", "/")
-    
-    
+            if str(mathOperations[index].operation).count('=') == 0:
+                second_comma = str(mathOperations[index].operation).replace(',', 'X', 1).find(',') #find second comma in string
+                mathOperations[index].operation = str(mathOperations[index].operation)[:second_comma] + '=' +str(mathOperations[index].operation)[second_comma + 1:] #add equals sign     
+                  
+                #same of overlying code but cleaner
+                #s = str(mathOperations[index].operation)
+                #index22 = s.replace(',', 'X', 1).find(',')
+                #mathOperations[index].operation = s[:index22] +  '=' + s[index22+1:]
     
     
     
@@ -195,16 +201,28 @@ def photo(message):
         if " " in str(mathOperations[index].operation):
             mathOperations[index].operation = str(mathOperations[index].operation).replace(" ", "")
         
-        if "\\$" in str(mathOperations[index].operation): #if is present, is likely that the $ is a 9
+        if "\\$" in str(mathOperations[index].operation): #if $ is present, is likely being a 9
             mathOperations[index].operation = str(mathOperations[index].operation).replace("$", "9")
             mathOperations[index].operation = str(mathOperations[index].operation).replace("\\", "")
-        if str(mathOperations[index].operation).count('=') > 1:
-            mathOperations[index].operation = str(mathOperations[index].operation).replace("=", "-", 1)
-    
+        if str(mathOperations[index].operation).count('=') > 1: #if more than one equals sign is present
+            if "+" in str(mathOperations[index].operation) or "*" in str(mathOperations[index].operation) or "/" in str(mathOperations[index].operation) or "-" in str(mathOperations[index].operation):# case: '900 +', '16 =', '916 ='
+                    second_equals = str(mathOperations[index].operation).replace('=', 'X', 1).find('=') #find second comma in string
+                    mathOperations[index].operation = str(mathOperations[index].operation)[:second_equals] + '' +str(mathOperations[index].operation)[second_equals + 1:]    
+            else:
+                mathOperations[index].operation = str(mathOperations[index].operation).replace("=", "-", 1) #TODO: test this else
+            
+        if "\\hline" in str(mathOperations[index].operation):
+            mathOperations[index].operation = str(mathOperations[index].operation).replace("hline", "")
+            mathOperations[index].operation = str(mathOperations[index].operation).replace("\\", "")
+        if "n" in str(mathOperations[index].operation):
+            mathOperations[index].operation = str(mathOperations[index].operation).replace("n", "4") #if n is present, is likely being a 4
+
     print(mathOperations)
     
     
-    
+    #################TODO############
+    need to test more and handle 2160', '1100', '2242
+
     
     
     
