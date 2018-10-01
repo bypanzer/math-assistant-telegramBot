@@ -34,12 +34,12 @@ def run(img, t1, t2, message, width, height):
     #segmentation algorithm
     sums2 = segmentationalgorithm.fireHorizontalGrid(edges_arr, width, height)
     if sums2 is None:
-        bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!33")
+        bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!2")
         return
     else:
         mathOperations = segmentationalgorithm.fireVerticalGrid(sums2, edges_arr, width, height)
         if mathOperations is None:
-            bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!2")
+            bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!3")
             return
         else:
             return mathOperations
@@ -64,7 +64,7 @@ print("myuser is",user.id)
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
-    bot.send_message(message.chat.id, "Ciao, sono un bot che corregge foto di operazioni matematiche scritte a mano. Inviami un foto con operazioni matematiche del tipo \"23 + 50 = 73\" o \"5 x 4 = 20\" e io ti dirò se sono giuste o meno! Versione 1.0: coreggo solo operazioni piane, non in colonna. A breve ci sarà l'upgrade ;)")        
+    bot.send_message(message.chat.id, "Ciao, sono un bot che corregge foto di operazioni matematiche scritte a mano.")        
 
     
     
@@ -100,7 +100,7 @@ def photo(message):
     
     
     #run algorithm
-    mathOperations = run(img, t1, t2, message, width, height)
+    mathOperations = run(img, t1_adjust, t2_adjust, message, width, height)
     
     if mathOperations is None:
         return
@@ -130,7 +130,7 @@ def photo(message):
         try:
             total_operation = index + 1
         except:
-            bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!20090")
+            bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!4")
             return
     
     
@@ -168,14 +168,47 @@ def photo(message):
                 mathOperations[index].operation = str(mathOperations[index].operation).replace("div", "/")
             if ":" in str(mathOperations[index].operation):
                 mathOperations[index].operation = str(mathOperations[index].operation).replace(":", "/")
+            
+            if "\\frac" in str(mathOperations[index].operation):
+                mathOperations[index].operation = str(mathOperations[index].operation).replace("frac", "")
+                mathOperations[index].operation = str(mathOperations[index].operation).replace("\\", "")
+                if "=" not in str(mathOperations[index].operation):
+                    if "+" in str(mathOperations[index].operation):
+                        mathOperations[index].operation = str(mathOperations[index].operation).replace("}", "+", 1)
+                        plus_equals = str(mathOperations[index].operation).replace('+', 'X', 1).find('+') #find second + in string
+                        mathOperations[index].operation = str(mathOperations[index].operation)[:plus_equals] + '=' +str(mathOperations[index].operation)[plus_equals + 1:]
+                    if "-" in str(mathOperations[index].operation):
+                        mathOperations[index].operation = str(mathOperations[index].operation).replace("}", "-", 1)
+                        plus_equals = str(mathOperations[index].operation).replace('-', 'X', 1).find('-') #find second + in string
+                        mathOperations[index].operation = str(mathOperations[index].operation)[:plus_equals] + '=' +str(mathOperations[index].operation)[plus_equals + 1:]
+                    if "*" in str(mathOperations[index].operation):
+                        mathOperations[index].operation = str(mathOperations[index].operation).replace("}", "*", 1)
+                        plus_equals = str(mathOperations[index].operation).replace('*', 'X', 1).find('*') #find second + in string
+                        mathOperations[index].operation = str(mathOperations[index].operation)[:plus_equals] + '=' +str(mathOperations[index].operation)[plus_equals + 1:]
+                    if "/" in str(mathOperations[index].operation):
+                        mathOperations[index].operation = str(mathOperations[index].operation).replace("}", "/", 1)
+                        plus_equals = str(mathOperations[index].operation).replace('/', 'X', 1).find('/') #find second + in string
+                        mathOperations[index].operation = str(mathOperations[index].operation)[:plus_equals] + '=' +str(mathOperations[index].operation)[plus_equals + 1:]
+                        
+                    mathOperations[index].operation = str(mathOperations[index].operation).replace("{", "")
+                    mathOperations[index].operation = str(mathOperations[index].operation).replace("}", "")
+                    print("i would like to watch this: ", mathOperations[index].operation )
+            #else: hadle this case if occours ' { { 21 } { 36 } + } { 57= }'
+                
             if str(mathOperations[index].operation).count('=') == 0:
                 second_comma = str(mathOperations[index].operation).replace(',', 'X', 1).find(',') #find second comma in string
                 mathOperations[index].operation = str(mathOperations[index].operation)[:second_comma] + '=' +str(mathOperations[index].operation)[second_comma + 1:] #add equals sign     
-                  
+                if "+" not in str(mathOperations[index].operation) or "*" not in str(mathOperations[index].operation) or "/" not in str(mathOperations[index].operation) or "-" not in str(mathOperations[index].operation):
+                    mathOperations[index].operation = str(mathOperations[index].operation).replace(",", "-", 1) #TODO: test this else
                 #same of overlying code but cleaner
                 #s = str(mathOperations[index].operation)
                 #index22 = s.replace(',', 'X', 1).find(',')
-                #mathOperations[index].operation = s[:index22] +  '=' + s[index22+1:]
+                #mathOperations[index].operation = s[:index22] +  '=' + s[index22+1:]        
+                
+            
+            
+    
+    
     
     
     
@@ -206,7 +239,7 @@ def photo(message):
             mathOperations[index].operation = str(mathOperations[index].operation).replace("\\", "")
         if str(mathOperations[index].operation).count('=') > 1: #if more than one equals sign is present
             if "+" in str(mathOperations[index].operation) or "*" in str(mathOperations[index].operation) or "/" in str(mathOperations[index].operation) or "-" in str(mathOperations[index].operation):# case: '900 +', '16 =', '916 ='
-                    second_equals = str(mathOperations[index].operation).replace('=', 'X', 1).find('=') #find second comma in string
+                    second_equals = str(mathOperations[index].operation).replace('=', 'X', 1).find('=') #find second equals in string
                     mathOperations[index].operation = str(mathOperations[index].operation)[:second_equals] + '' +str(mathOperations[index].operation)[second_equals + 1:]    
             else:
                 mathOperations[index].operation = str(mathOperations[index].operation).replace("=", "-", 1) #TODO: test this else
@@ -216,12 +249,12 @@ def photo(message):
             mathOperations[index].operation = str(mathOperations[index].operation).replace("\\", "")
         if "n" in str(mathOperations[index].operation):
             mathOperations[index].operation = str(mathOperations[index].operation).replace("n", "4") #if n is present, is likely being a 4
-
-    print(mathOperations)
+            
+    #print(mathOperations)
     
     
     #################TODO############
-    need to test more and handle 2160', '1100', '2242
+    #need to test more and handle 2160', '1100', '2242
 
     
     
@@ -248,9 +281,9 @@ def photo(message):
                 someOperationHasNotBeenReadProperly = True
      
     mathOperations = newMathOp
-    #print(mathOperations)
+    print(mathOperations)
     if mathOperations.size == 0:
-        bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!")
+        bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!444")
         return
     
     
