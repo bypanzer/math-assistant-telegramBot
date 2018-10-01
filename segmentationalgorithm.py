@@ -16,13 +16,13 @@ def fireHorizontalGrid(edges_arr, width, height):
         return None
     
     #deleteWhiteNoise
-    sums = deleteWhiteNoise(sums, 10, 10)
+    sums = deleteWhiteNoise(sums, 20, 10)
 
     #mergeConsecutiveEqualsNumbers
     sums2 = mergeConsecutiveEqualsNumbers(sums)
 
     #deleteBlackNoise
-    sums = deleteBlackNoise(sums2, 12, 10, 5)   #12 horizontal noise 
+    sums = deleteBlackNoise(sums2, 10, 10, 5)   #10 horizontal noise 
 
     #mergeConsecutiveEqualsNumbers
     sums2 = mergeConsecutiveEqualsNumbers(sums)
@@ -47,9 +47,9 @@ def fireVerticalGrid(sums2, edges_arr, width, height):
                 return None
             sums = calculateSum(foregrounds2)
             if sums is not None:
-                sumsWithWhiteNoise = deleteWhiteNoise(sums, 5, 10)
+                sumsWithWhiteNoise = deleteWhiteNoise(sums, 5, 18)
                 sums22 = mergeConsecutiveEqualsNumbers(sumsWithWhiteNoise)
-                sumsWithBlackNoise = deleteBlackNoise(sums22, 60, 5, 5) #50 vertical noise
+                sumsWithBlackNoise = deleteBlackNoise(sums22, 62, 5, 5) #60 vertical noise
                 sums32 = mergeConsecutiveEqualsNumbers(sumsWithBlackNoise)
                 mathOperationArrayRes = drawVerticalLines(sums32, edges_arr, width, height, start, stop)
                 resMathOperations = np.append(resMathOperations, mathOperationArrayRes)
@@ -106,8 +106,8 @@ def deleteWhiteNoise(sums, threshold, leftAndRightBlackValues):
             return None
     for index in range(1, sums.size - 1):
         if sums[index].y == 1:
-            if sums[index].x <= threshold: #10 -> withThreshold
-                if sums[index - 1].x > leftAndRightBlackValues or sums[index + 1].x > leftAndRightBlackValues: #15 -> leftAndRightBlackValues
+            if sums[index].x <= threshold:
+                if sums[index - 1].x > leftAndRightBlackValues or sums[index + 1].x > leftAndRightBlackValues:
                     sums[index].y = 0
     if sums[0].y == 1:
         sums[0].y = 0

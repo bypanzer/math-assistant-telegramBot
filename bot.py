@@ -29,17 +29,15 @@ def run(img, t1, t2, message, width, height):
     scipy.misc.toimage(closing, cmin=0.0, cmax=1.0).save('outfile.jpg')
     #send photo to client
     photo = open('outfile.jpg', 'rb')
-    bot.send_photo(chat_id=message.chat.id, photo=photo)
+    #bot.send_photo(chat_id=message.chat.id, photo=photo)
     
     #segmentation algorithm
     sums2 = segmentationalgorithm.fireHorizontalGrid(edges_arr, width, height)
     if sums2 is None:
-        bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!2")
         return
     else:
         mathOperations = segmentationalgorithm.fireVerticalGrid(sums2, edges_arr, width, height)
         if mathOperations is None:
-            bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!3")
             return
         else:
             return mathOperations
@@ -79,10 +77,14 @@ def photo(message):
     downloaded_file = bot.download_file(file_info.file_path)
 
     someOperationHasNotBeenReadProperly = False
-    t1 = 225
-    t2 = 350
+    t1 = 255
+    t2 = 375
     t1_adjust = 580
     t2_adjust = 680
+    
+    t1_adjust2 = 445
+    t2_adjust2 = 500
+    
     height = message.photo[3].height
     width = message.photo[3].width
     total_operation = 0
@@ -100,10 +102,18 @@ def photo(message):
     
     
     #run algorithm
-    mathOperations = run(img, t1_adjust, t2_adjust, message, width, height)
+    mathOperations = run(img, t1, t2, message, width, height)
     
-    if mathOperations is None:
-        return
+    if mathOperations is None or mathOperations.size == 1 :
+        mathOperations = run(img, t1_adjust2, t2_adjust2, message, width, height)
+        #print(mathOperations)
+        if mathOperations is None or mathOperations.size == 1:
+            mathOperations = run(img, t1_adjust, t2_adjust, message, width, height)
+            if mathOperations is None:
+                bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!4")
+                return
+            
+    
     
     
     #crop all operations from original image
@@ -112,26 +122,8 @@ def photo(message):
             rgbimg = Image.open("image.jpg")
             crop = rgbimg.crop((mathOperations[index].x, mathOperations[index].y, mathOperations[index].x + mathOperations[index].width, mathOperations[index].y + mathOperations[index].height))
             crop.save("croppedImage/cropped" + str(index) + ".jpg")
-    try:
+   
         total_operation = index + 1
-    except:
-        
-        #re run algorithm with adjusted canny threshold
-        mathOperations = run(img, t1_adjust, t2_adjust, message, width, height)
-        
-        
-        #crop all operations from original image
-        #setResultFromMathpix()
-        for index in range(mathOperations.size):
-            if mathOperations[index].operation == "undefined":
-                rgbimg = Image.open("image.jpg")
-                crop = rgbimg.crop((mathOperations[index].x, mathOperations[index].y, mathOperations[index].x + mathOperations[index].width, mathOperations[index].y + mathOperations[index].height))
-                crop.save("croppedImage/cropped" + str(index) + ".jpg")
-        try:
-            total_operation = index + 1
-        except:
-            bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!4")
-            return
     
     
     
@@ -168,6 +160,12 @@ def photo(message):
                 mathOperations[index].operation = str(mathOperations[index].operation).replace("div", "/")
             if ":" in str(mathOperations[index].operation):
                 mathOperations[index].operation = str(mathOperations[index].operation).replace(":", "/")
+            if "|" in str(mathOperations[index].operation):
+                mathOperations[index].operation = str(mathOperations[index].operation).replace("|", "/")
+            if "\\hline" in str(mathOperations[index].operation):
+                mathOperations[index].operation = str(mathOperations[index].operation).replace("hline", "")
+                mathOperations[index].operation = str(mathOperations[index].operation).replace("\\", "")
+                print(mathOperations[index].operation)
             
             if "\\frac" in str(mathOperations[index].operation):
                 mathOperations[index].operation = str(mathOperations[index].operation).replace("frac", "")
@@ -192,22 +190,47 @@ def photo(message):
                         
                     mathOperations[index].operation = str(mathOperations[index].operation).replace("{", "")
                     mathOperations[index].operation = str(mathOperations[index].operation).replace("}", "")
-                    print("i would like to watch this: ", mathOperations[index].operation )
+                    
             #else: hadle this case if occours ' { { 21 } { 36 } + } { 57= }'
                 
             if str(mathOperations[index].operation).count('=') == 0:
                 second_comma = str(mathOperations[index].operation).replace(',', 'X', 1).find(',') #find second comma in string
                 mathOperations[index].operation = str(mathOperations[index].operation)[:second_comma] + '=' +str(mathOperations[index].operation)[second_comma + 1:] #add equals sign     
-                if "+" not in str(mathOperations[index].operation) or "*" not in str(mathOperations[index].operation) or "/" not in str(mathOperations[index].operation) or "-" not in str(mathOperations[index].operation):
+                if "+" not in str(mathOperations[index].operation) and "*" not in str(mathOperations[index].operation) and "/" not in str(mathOperations[index].operation) and "-" not in str(mathOperations[index].operation):
                     mathOperations[index].operation = str(mathOperations[index].operation).replace(",", "-", 1) #TODO: test this else
                 #same of overlying code but cleaner
                 #s = str(mathOperations[index].operation)
                 #index22 = s.replace(',', 'X', 1).find(',')
                 #mathOperations[index].operation = s[:index22] +  '=' + s[index22+1:]        
                 
-            
-            
-    
+            if str(mathOperations[index].operation).count('=') == 1:
+                if "+" not in str(mathOperations[index].operation) and "*" not in str(mathOperations[index].operation) and "/" not in str(mathOperations[index].operation) and "-" not in str(mathOperations[index].operation):
+                    
+                    testString = str(mathOperations[index].operation)
+                    
+                    testString = testString.replace(",", "-", 1) #handle: ['127', '48 =', '175'], here i assign first - and check if the operation is correct, then try to assign + if it's not 
+                    if "'" in testString:
+                        testString = testString.replace("'", "")
+                    if "," in testString:
+                        testString = testString.replace(",", "")
+                    if "[" in testString:
+                        testString = testString.replace("[", "")
+                    if "]" in testString:
+                        testString = testString.replace("]", "")
+                    if " " in testString:
+                        testString = testString.replace(" ", "")
+                        
+                        
+                    nsp = NumericStringParser()
+                    splitOperation =  testString.split("=")
+                    try:
+                        evaluation = nsp.eval(str(splitOperation[0]))
+                        if int(evaluation) == int(splitOperation[1]):
+                            mathOperations[index].operation = str(mathOperations[index].operation).replace(",", "-", 1) #means that the operator was actually -
+                        else:
+                            mathOperations[index].operation = str(mathOperations[index].operation).replace(",", "+", 1) #else it's a +
+                    except:
+                            mathOperations[index].operation = ""
     
     
     
@@ -230,7 +253,6 @@ def photo(message):
             mathOperations[index].operation = str(mathOperations[index].operation).replace("[", "")
         if "]" in str(mathOperations[index].operation):
             mathOperations[index].operation = str(mathOperations[index].operation).replace("]", "")
-        
         if " " in str(mathOperations[index].operation):
             mathOperations[index].operation = str(mathOperations[index].operation).replace(" ", "")
         
@@ -243,6 +265,14 @@ def photo(message):
                     mathOperations[index].operation = str(mathOperations[index].operation)[:second_equals] + '' +str(mathOperations[index].operation)[second_equals + 1:]    
             else:
                 mathOperations[index].operation = str(mathOperations[index].operation).replace("=", "-", 1) #TODO: test this else
+                if str(mathOperations[index].operation).count('=') == 3: #handle: ['1 2 1 =', '1 2 = =', '1 1 8 =']
+                    mathOperations[index].operation = str(mathOperations[index].operation).replace("=", "", 1)
+                    second_equals = str(mathOperations[index].operation).replace('=', 'X', 1).find('=') #find second equals in string
+                    mathOperations[index].operation = str(mathOperations[index].operation)[:second_equals] + '' +str(mathOperations[index].operation)[second_equals + 1:]
+                    
+                    
+                    
+                
             
         if "\\hline" in str(mathOperations[index].operation):
             mathOperations[index].operation = str(mathOperations[index].operation).replace("hline", "")
@@ -250,12 +280,9 @@ def photo(message):
         if "n" in str(mathOperations[index].operation):
             mathOperations[index].operation = str(mathOperations[index].operation).replace("n", "4") #if n is present, is likely being a 4
             
-    #print(mathOperations)
+    print(mathOperations)
     
-    
-    #################TODO############
-    #need to test more and handle 2160', '1100', '2242
-
+   
     
     
     
@@ -281,13 +308,219 @@ def photo(message):
                 someOperationHasNotBeenReadProperly = True
      
     mathOperations = newMathOp
-    print(mathOperations)
+    #print(mathOperations)
     if mathOperations.size == 0:
-        bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!444")
-        return
-    
-    
-    
+        bot.send_message(message.chat.id, "Riprocesso..")
+        #run algorithm
+        mathOperations = run(img, t1_adjust, t2_adjust, message, width, height)
+
+        if mathOperations is None or mathOperations.size == 1 :
+            mathOperations = run(img, t1_adjust2, t2_adjust2, message, width, height)
+            #print(mathOperations)
+            if mathOperations is None or mathOperations.size == 1:
+                mathOperations = run(img, t1_adjust, t2_adjust, message, width, height)
+                if mathOperations is None:
+                    bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!4")
+                    return
+
+
+
+
+        #crop all operations from original image
+        for index in range(mathOperations.size):
+            if mathOperations[index].operation == "undefined":
+                rgbimg = Image.open("image.jpg")
+                crop = rgbimg.crop((mathOperations[index].x, mathOperations[index].y, mathOperations[index].x + mathOperations[index].width, mathOperations[index].y + mathOperations[index].height))
+                crop.save("croppedImage/cropped" + str(index) + ".jpg")
+
+            total_operation = index + 1
+
+
+
+
+
+
+
+
+        #recognize characters
+        mathOperations = mathpix.recognize(total_operation, mathOperations)
+        print(mathOperations)
+
+
+
+
+
+
+
+        #parse operations
+        newMathOperations = np.array([])
+        for index in range(mathOperations.size):
+            if len(mathOperations[index].operation) != 0:
+                newMathOperations = np.append(newMathOperations, mathOperations[index])
+                #replace \\div and \\times if present
+                if "\\times" in str(mathOperations[index].operation):
+                    mathOperations[index].operation = str(mathOperations[index].operation).replace("times", "*")
+                    mathOperations[index].operation = str(mathOperations[index].operation).replace("\\", "")
+                if "\\div" in str(mathOperations[index].operation):
+                    mathOperations[index].operation = str(mathOperations[index].operation).replace("div", "/")
+                    mathOperations[index].operation = str(mathOperations[index].operation).replace("\\", "")
+                if "x" in str(mathOperations[index].operation):
+                    mathOperations[index].operation = str(mathOperations[index].operation).replace("x", "*")
+                if "div" in str(mathOperations[index].operation):
+                    mathOperations[index].operation = str(mathOperations[index].operation).replace("div", "/")
+                if ":" in str(mathOperations[index].operation):
+                    mathOperations[index].operation = str(mathOperations[index].operation).replace(":", "/")
+                if "|" in str(mathOperations[index].operation):
+                    mathOperations[index].operation = str(mathOperations[index].operation).replace("|", "/")
+                if "\\hline" in str(mathOperations[index].operation):
+                    mathOperations[index].operation = str(mathOperations[index].operation).replace("hline", "")
+                    mathOperations[index].operation = str(mathOperations[index].operation).replace("\\", "")
+                    print(mathOperations[index].operation)
+
+                if "\\frac" in str(mathOperations[index].operation):
+                    mathOperations[index].operation = str(mathOperations[index].operation).replace("frac", "")
+                    mathOperations[index].operation = str(mathOperations[index].operation).replace("\\", "")
+                    if "=" not in str(mathOperations[index].operation):
+                        if "+" in str(mathOperations[index].operation):
+                            mathOperations[index].operation = str(mathOperations[index].operation).replace("}", "+", 1)
+                            plus_equals = str(mathOperations[index].operation).replace('+', 'X', 1).find('+') #find second + in string
+                            mathOperations[index].operation = str(mathOperations[index].operation)[:plus_equals] + '=' +str(mathOperations[index].operation)[plus_equals + 1:]
+                        if "-" in str(mathOperations[index].operation):
+                            mathOperations[index].operation = str(mathOperations[index].operation).replace("}", "-", 1)
+                            plus_equals = str(mathOperations[index].operation).replace('-', 'X', 1).find('-') #find second + in string
+                            mathOperations[index].operation = str(mathOperations[index].operation)[:plus_equals] + '=' +str(mathOperations[index].operation)[plus_equals + 1:]
+                        if "*" in str(mathOperations[index].operation):
+                            mathOperations[index].operation = str(mathOperations[index].operation).replace("}", "*", 1)
+                            plus_equals = str(mathOperations[index].operation).replace('*', 'X', 1).find('*') #find second + in string
+                            mathOperations[index].operation = str(mathOperations[index].operation)[:plus_equals] + '=' +str(mathOperations[index].operation)[plus_equals + 1:]
+                        if "/" in str(mathOperations[index].operation):
+                            mathOperations[index].operation = str(mathOperations[index].operation).replace("}", "/", 1)
+                            plus_equals = str(mathOperations[index].operation).replace('/', 'X', 1).find('/') #find second + in string
+                            mathOperations[index].operation = str(mathOperations[index].operation)[:plus_equals] + '=' +str(mathOperations[index].operation)[plus_equals + 1:]
+
+                        mathOperations[index].operation = str(mathOperations[index].operation).replace("{", "")
+                        mathOperations[index].operation = str(mathOperations[index].operation).replace("}", "")
+
+                #else: hadle this case if occours ' { { 21 } { 36 } + } { 57= }'
+
+                if str(mathOperations[index].operation).count('=') == 0:
+                    second_comma = str(mathOperations[index].operation).replace(',', 'X', 1).find(',') #find second comma in string
+                    mathOperations[index].operation = str(mathOperations[index].operation)[:second_comma] + '=' +str(mathOperations[index].operation)[second_comma + 1:] #add equals sign     
+                    if "+" not in str(mathOperations[index].operation) and "*" not in str(mathOperations[index].operation) and "/" not in str(mathOperations[index].operation) and "-" not in str(mathOperations[index].operation):
+                        mathOperations[index].operation = str(mathOperations[index].operation).replace(",", "-", 1) #TODO: test this else
+                    #same of overlying code but cleaner
+                    #s = str(mathOperations[index].operation)
+                    #index22 = s.replace(',', 'X', 1).find(',')
+                    #mathOperations[index].operation = s[:index22] +  '=' + s[index22+1:]        
+
+                if str(mathOperations[index].operation).count('=') == 1:
+                    if "+" not in str(mathOperations[index].operation) and "*" not in str(mathOperations[index].operation) and "/" not in str(mathOperations[index].operation) and "-" not in str(mathOperations[index].operation):
+
+                        testString = str(mathOperations[index].operation)
+
+                        testString = testString.replace(",", "-", 1) #handle: ['127', '48 =', '175'], here i assign first - and check if the operation is correct, then try to assign + if it's not 
+                        if "'" in testString:
+                            testString = testString.replace("'", "")
+                        if "," in testString:
+                            testString = testString.replace(",", "")
+                        if "[" in testString:
+                            testString = testString.replace("[", "")
+                        if "]" in testString:
+                            testString = testString.replace("]", "")
+                        if " " in testString:
+                            testString = testString.replace(" ", "")
+
+
+                        nsp = NumericStringParser()
+                        splitOperation =  testString.split("=")
+                        try:
+                            evaluation = nsp.eval(str(splitOperation[0]))
+                            if int(evaluation) == int(splitOperation[1]):
+                                mathOperations[index].operation = str(mathOperations[index].operation).replace(",", "-", 1) #means that the operator was actually -
+                            else:
+                                mathOperations[index].operation = str(mathOperations[index].operation).replace(",", "+", 1) #else it's a +
+                        except:
+                                mathOperations[index].operation = ""
+
+
+
+
+        #check if is present some letters in operations
+        mathOperations = np.array([])    
+        for index in range(newMathOperations.size):
+            if "y" not in str(newMathOperations[index].operation) or "a" not in str(newMathOperations[index].operation) or "t" not in str(newMathOperations[index].operation):
+                if "=" in str(newMathOperations[index].operation):
+                    mathOperations = np.append(mathOperations, newMathOperations[index])
+
+
+        #parsing for in column operation
+        for index in range(mathOperations.size):
+            if "'" in str(mathOperations[index].operation):
+                mathOperations[index].operation = str(mathOperations[index].operation).replace("'", "")
+            if "," in str(mathOperations[index].operation):
+                mathOperations[index].operation = str(mathOperations[index].operation).replace(",", "")
+            if "[" in str(mathOperations[index].operation):
+                mathOperations[index].operation = str(mathOperations[index].operation).replace("[", "")
+            if "]" in str(mathOperations[index].operation):
+                mathOperations[index].operation = str(mathOperations[index].operation).replace("]", "")
+            if " " in str(mathOperations[index].operation):
+                mathOperations[index].operation = str(mathOperations[index].operation).replace(" ", "")
+
+            if "\\$" in str(mathOperations[index].operation): #if $ is present, is likely being a 9
+                mathOperations[index].operation = str(mathOperations[index].operation).replace("$", "9")
+                mathOperations[index].operation = str(mathOperations[index].operation).replace("\\", "")
+            if str(mathOperations[index].operation).count('=') > 1: #if more than one equals sign is present
+                if "+" in str(mathOperations[index].operation) or "*" in str(mathOperations[index].operation) or "/" in str(mathOperations[index].operation) or "-" in str(mathOperations[index].operation):# case: '900 +', '16 =', '916 ='
+                        second_equals = str(mathOperations[index].operation).replace('=', 'X', 1).find('=') #find second equals in string
+                        mathOperations[index].operation = str(mathOperations[index].operation)[:second_equals] + '' +str(mathOperations[index].operation)[second_equals + 1:]    
+                else:
+                    mathOperations[index].operation = str(mathOperations[index].operation).replace("=", "-", 1) #TODO: test this else
+                    if str(mathOperations[index].operation).count('=') == 3: #handle: ['1 2 1 =', '1 2 = =', '1 1 8 =']
+                        mathOperations[index].operation = str(mathOperations[index].operation).replace("=", "", 1)
+                        second_equals = str(mathOperations[index].operation).replace('=', 'X', 1).find('=') #find second equals in string
+                        mathOperations[index].operation = str(mathOperations[index].operation)[:second_equals] + '' +str(mathOperations[index].operation)[second_equals + 1:]
+
+
+
+
+
+            if "\\hline" in str(mathOperations[index].operation):
+                mathOperations[index].operation = str(mathOperations[index].operation).replace("hline", "")
+                mathOperations[index].operation = str(mathOperations[index].operation).replace("\\", "")
+            if "n" in str(mathOperations[index].operation):
+                mathOperations[index].operation = str(mathOperations[index].operation).replace("n", "4") #if n is present, is likely being a 4
+
+        print(mathOperations)
+
+
+
+
+
+
+        #evaluate correctness
+        nsp = NumericStringParser()
+        newMathOp = np.array([])
+        for index in range(mathOperations.size):
+            splitOperation =  str(mathOperations[index].operation).split("=")
+            try:
+                evaluation = nsp.eval(str(splitOperation[0]))
+                moreOperationInOne = int(splitOperation[1])
+            except:
+                mathOperations[index].operation = "todelete"
+            if mathOperations[index].operation != "todelete":
+                newMathOp = np.append(newMathOp, mathOperations[index])
+                if int(evaluation) == int(splitOperation[1]):
+                    mathOperations[index].isCorrect = True
+                else:
+                    mathOperations[index].isCorrect = False
+            else:
+                if not someOperationHasNotBeenReadProperly: 
+                    someOperationHasNotBeenReadProperly = True
+
+        mathOperations = newMathOp
+        if mathOperations.size == 0:
+            bot.send_message(message.chat.id, "Qualcosa è andato storto. Allontana un po' di più il dispositivo dal foglio!444")
+            return
     
     
     
@@ -324,7 +557,7 @@ def photo(message):
     
     #send photo to client
     photo = open('outfile.jpg', 'rb')
-    bot.send_photo(chat_id=message.chat.id, photo=photo)
+    #bot.send_photo(chat_id=message.chat.id, photo=photo)
     
     
     
