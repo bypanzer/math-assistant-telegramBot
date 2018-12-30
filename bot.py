@@ -54,7 +54,7 @@ def wait_for_user_input():
 
 
     
-bot_token = '526035971:AAGJudEYdqnT9LZE-0Rz86PQvyel9agFyNo'
+bot_token = '<INSERT YOUR BOT TOKEN>'
 bot = telebot.TeleBot(token=bot_token)
 user = bot.get_me()
 print("myuser is",user.id)
